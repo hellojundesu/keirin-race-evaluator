@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>競輪レース評価ツール</title>
+  <meta name="description" content="公開出走表と登録番号DBを組み合わせた競輪レース評価・脚評価管理画面">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20261014-web-auth">
+</head>
+<body class="web-locked">
+  <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <p class="eyebrow">KEIRIN PRIVATE WORKSPACE</p>
+      <h1 id="loginTitle">競輪レース評価ツール</h1>
+      <p class="login-description">登録された利用者だけが使用できます。評価とコメントはログインユーザーごとに保存されます。</p>
+      <form id="loginForm" class="login-form">
+        <label><span>メールアドレス</span><input name="email" type="email" autocomplete="username" required></label>
+        <label><span>パスワード</span><input name="password" type="password" autocomplete="current-password" required></label>
+        <p id="loginError" class="login-error" role="alert"></p>
+        <button id="loginButton" type="submit" class="primary-button">ログイン</button>
+      </form>
+    </div>
+  </section>
+
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">2026年前期 選手評価DB</p>
+      <h1>競輪レース評価ツール</h1>
+    </div>
+    <nav class="view-tabs" aria-label="表示切替">
+      <button class="view-tab active" type="button" data-view="race" aria-pressed="true">出走表</button>
+      <button class="view-tab" type="button" data-view="athlete" aria-pressed="false">選手管理</button>
+    </nav>
+    <div class="header-status">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="dbStatus">DB接続確認中</span>
+    </div>
+    <div class="web-user">
+      <span id="signedInEmail"></span>
+      <button id="logoutButton" type="button" class="secondary-button">ログアウト</button>
+    </div>
+  </header>
+
+  <main id="raceWorkspace" class="race-workspace view-workspace">
+    <section class="race-control-panel">
+      <div class="race-control-copy">
+        <p class="panel-kicker">公開出走表をDBと照合</p>
+        <h2>日付から出走表を探す</h2>
+        <p>日付を選ぶと、その日に開催される競輪場と全レースを表示します。</p>
+      </div>
+      <form id="raceDateSearchForm" class="race-date-search-form">
+        <label>
+          <span>開催日</span>
+          <input id="raceDiscoveryDate" type="date" required>
+        </label>
+        <button id="raceDateSearchButton" type="submit" class="primary-button">この日のレースを検索</button>
+      </form>
+      <div id="dailyRacecards" class="daily-racecards">
+        <p class="race-list-empty">日付を指定して検索してください。</p>
+      </div>
+      <details class="direct-import-details">
+        <summary>レースID・URLから直接取り込む</summary>
+      <form id="raceImportForm" class="race-import-form">
+        <label>
+          <span>出走表URL・レースID</span>
+          <input id="raceSourceInput" name="source" placeholder="例：202610044706" autocomplete="off" required>
+        </label>
+        <button id="raceImportButton" type="submit" class="primary-button">取得して表示</button>
+      </form>
+      </details>
+      <div class="race-filter-row">
+        <label>
+          <span>保存済みレースの日付</span>
+          <input id="raceDateFilter" type="date">
+        </label>
+        <button id="raceDateClear" type="button" class="secondary-button">全日付</button>
+      </div>
+      <div id="raceList" class="race-list" aria-label="保存済みレース"></div>
+    </section>
+
+    <section class="race-detail-panel" aria-live="polite">
+      <div id="raceEmptyState" class="race-empty-state">
+        <div class="empty-mark">輪</div>
+        <h2>レースを選択してください</h2>
+        <p>公開出走表を取り込むか、保存済みレースを選ぶと指数と評価を確認できます。</p>
+      </div>
+      <div id="raceDetail" hidden>
+        <div class="race-detail-header">
+          <div>
+            <p id="raceMeta" class="race-meta"></p>
+            <h2 id="raceTitle"></h2>
+          </div>
+          <div class="race-header-actions">
+            <span id="raceSaveState" class="save-state">保存済み</span>
+            <button id="commentRefreshButton" type="button" class="secondary-button">コメント再取得</button>
+            <button id="columnCustomizeButton" type="button" class="secondary-button">表示項目を変更</button>
+            <button id="raceSaveButton" type="button" class="primary-button">脚評価・コメントを保存</button>
+          </div>
+        </div>
+        <div class="index-note">
+          <strong>暫定指数</strong>
+          <span>選手評価45%＋競走得点のレース内比較55%＋同一開催の前回脚評価。前開催の脚評価・コメント・波乱指数は計算に含みません。</span>
+        </div>
+        <section id="lineDisplay" class="line-display" aria-label="ライン予想"></section>
+        <p id="externalCommentStatus" class="external-comment-status"></p>
+        <div class="race-table-wrap">
+          <table class="race-table">
+            <thead id="raceTableHead"></thead>
+            <tbody id="raceEntries"></tbody>
+          </table>
+        </div>
+        <section id="holeCandidates" class="hole-candidates" aria-live="polite"></section>
+      </div>
+    </section>
+  </main>
+
+  <main id="athleteWorkspace" class="workspace view-workspace" hidden>
+    <aside class="search-pane" aria-label="選手検索">
+      <section class="search-controls">
+        <label class="search-field">
+          <span>登録番号・選手名</span>
+          <input id="searchInput" type="search" placeholder="例：15035 または 阿部" autocomplete="off">
+        </label>
+        <div class="filter-grid">
+          <label>
+            <span>級班</span>
+            <select id="classFilter"><option value="">すべて</option></select>
+          </label>
+          <label>
+            <span>府県</span>
+            <select id="prefectureFilter"><option value="">すべて</option></select>
+          </label>
+        </div>
+      </section>
+      <div class="result-heading">
+        <strong>選手一覧</strong>
+        <span id="resultCount">0件</span>
+      </div>
+      <div id="athleteList" class="athlete-list" role="listbox" aria-label="選手一覧"></div>
+      <button id="loadMoreButton" class="secondary-button load-more" hidden>さらに表示</button>
+    </aside>
+
+    <section class="detail-pane" aria-live="polite">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-mark">輪</div>
+        <h2>選手を選択してください</h2>
+        <p>左の一覧から選ぶと、プロフィール・評価・変更履歴を編集できます。</p>
+      </div>
+
+      <form id="editorForm" class="editor" hidden>
+        <div class="editor-toolbar">
+          <div>
+            <div class="identity-line">
+              <span id="registrationBadge" class="registration-badge"></span>
+              <span id="saveState" class="save-state">保存済み</span>
+            </div>
+            <h2 id="athleteTitle"></h2>
+          </div>
+          <div class="toolbar-actions">
+            <button id="resetButton" type="button" class="secondary-button">変更を戻す</button>
+            <button id="saveButton" type="submit" class="primary-button">保存</button>
+          </div>
+        </div>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <h3>基本情報</h3>
+            <span>登録番号は変更できません</span>
+          </div>
+          <div class="form-grid profile-grid">
+            <label><span>選手名</span><input name="source_name" required></label>
+            <label><span>KEIRIN.JP氏名</span><input name="official_name" required></label>
+            <label><span>年齢</span><input name="age" type="number" min="15" max="100"></label>
+            <label><span>級班</span><select name="class_code" required></select></label>
+            <label><span>府県</span><select name="prefecture" required></select></label>
+            <label><span>ホーム</span><input name="home_bank"></label>
+            <label><span>期別</span><input name="cohort" type="number" min="1" max="999"></label>
+            <label><span>タイプ1</span><select name="primary_style"><option value="">未設定</option><option>先行</option><option>捲</option><option>自在</option><option>追い込み</option></select></label>
+            <label><span>タイプ2</span><select name="secondary_style"><option value="">未設定</option><option>先行</option><option>捲</option><option>自在</option><option>追い込み</option></select></label>
+            <label><span>評価期間</span><input name="evaluation_period" readonly></label>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <h3>選手評価</h3>
+            <span>空欄も保存できます</span>
+          </div>
+          <div id="evaluationGrid" class="evaluation-grid"></div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading"><h3>補足情報</h3></div>
+          <div class="form-grid notes-grid">
+            <label><span>相性◯バンク</span><input name="positive_track_affinity_raw"></label>
+            <label><span>相性✕バンク</span><input name="negative_track_affinity_raw"></label>
+            <label><span>不得意季節</span><input name="weak_season_raw"></label>
+            <label class="full-width"><span>コメント</span><textarea name="comment" rows="5"></textarea></label>
+          </div>
+        </section>
+
+        <section class="panel-section history-section">
+          <div class="section-heading"><h3>変更履歴</h3><span>直近50件</span></div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </form>
+    </section>
+  </main>
+
+  <div id="columnCustomizer" class="modal-backdrop" hidden>
+    <section class="customizer-dialog" role="dialog" aria-modal="true" aria-labelledby="customizerTitle">
+      <div class="customizer-header">
+        <div>
+          <p class="panel-kicker">出走表のカスタム</p>
+          <h2 id="customizerTitle">表示項目と順番</h2>
+        </div>
+        <button id="columnCustomizeClose" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+      <p class="customizer-help">表示する項目にチェックを入れ、つまみをドラッグして順番を変更してください。車番と選手名は左側に固定されます。</p>
+      <ol id="columnList" class="column-list"></ol>
+      <div class="customizer-actions">
+        <button id="columnCancelButton" type="button" class="secondary-button">キャンセル</button>
+        <button id="columnSaveButton" type="button" class="primary-button">この並びで保存</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="sStatsModal" class="modal-backdrop" hidden>
+    <section class="customizer-dialog s-stats-dialog" role="dialog" aria-modal="true" aria-labelledby="sStatsTitle">
+      <div class="customizer-header">
+        <div>
+          <p class="panel-kicker">結果表SB欄から集計</p>
+          <h2 id="sStatsTitle">車番別S成績</h2>
+          <p id="sStatsSubtitle" class="s-stats-subtitle"></p>
+        </div>
+        <button id="sStatsClose" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+      <div id="sStatsSummary" class="s-stats-summary"></div>
+      <div class="s-stats-table-wrap">
+        <table class="s-stats-table">
+          <thead><tr><th>車番</th><th>確認済み出走</th><th>S回数</th><th>S率</th></tr></thead>
+          <tbody id="sStatsBody"></tbody>
+        </table>
+      </div>
+      <p class="customizer-help">欠場は出走数から除外。失格・棄権は出走に含み、結果表のSB欄にSを含む場合を1回として集計しています。</p>
+    </section>
+  </div>
+
+  <div id="externalCommentModal" class="modal-backdrop" hidden>
+    <section class="customizer-dialog external-comment-dialog" role="dialog" aria-modal="true" aria-labelledby="externalCommentTitle">
+      <div class="customizer-header">
+        <div>
+          <p id="externalCommentKicker" class="panel-kicker">WINTICKETコメント</p>
+          <h2 id="externalCommentTitle">コメント</h2>
+          <p id="externalCommentSubtitle" class="s-stats-subtitle"></p>
+        </div>
+        <button id="externalCommentClose" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+      <div id="externalCommentBody" class="external-comment-body"></div>
+    </section>
+  </div>
+
+  <div id="venueStatsModal" class="modal-backdrop" hidden>
+    <section class="customizer-dialog venue-stats-dialog" role="dialog" aria-modal="true" aria-labelledby="venueStatsTitle">
+      <div class="customizer-header">
+        <div>
+          <p class="panel-kicker">過去3年間・競輪場別成績</p>
+          <h2 id="venueStatsTitle">選手別・競輪場成績</h2>
+          <p id="venueStatsSubtitle" class="s-stats-subtitle"></p>
+        </div>
+        <button id="venueStatsClose" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+      <div id="venueStatsBody" class="venue-stats-body" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="config.js?v=20261014-web-auth" defer></script>
+  <script src="web-api.js?v=20261014-web-auth" defer></script>
+  <script src="app.js?v=20261014-web-auth" defer></script>
+</body>
+</html>
