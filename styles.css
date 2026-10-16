@@ -149,6 +149,7 @@ h1 { margin: 0; font-size: 24px; letter-spacing: .02em; }
 .athlete-venue-button:hover, .athlete-venue-button:focus-visible { color: #073e65; border-bottom-style: solid; outline: none; }
 .name-incident-summary { display: flex; flex-wrap: wrap; gap: 3px; margin: 4px 0; white-space: nowrap; }
 .name-incident-summary span { padding: 2px 5px; border-radius: 4px; color: #26374a; background: #edf2f6; font-size: 11px; line-height: 1.35; }
+.incident-label { font-style: normal; }
 .name-incident-summary b { margin-left: 2px; font-size: 12px; }
 .name-incident-summary .fall-abandon { background: #fee8e7; color: #9b2924; }
 .name-incident-summary .fall-remount { background: #fff1d5; color: #805800; }
@@ -199,6 +200,12 @@ h1 { margin: 0; font-size: 24px; letter-spacing: .02em; }
 .formation-performance.unavailable { min-height: 48px; place-content: center; color: var(--muted); }
 .formation-performance.unavailable strong { font-size: 13px; }
 .race-comment { min-height: 58px; resize: vertical; }
+.user-comment-button { min-width: 112px; padding: 7px 9px; color: #526171; background: #f5f7f9; border: 1px solid #cbd6df; border-radius: 7px; font-weight: 800; cursor: pointer; }
+.user-comment-button.has-comment { color: #0d5b8f; background: #eef7fd; border-color: #9bcbe9; }
+.user-race-comment-dialog { width: min(620px, 100%); }
+.user-race-comment-field { margin-top: 16px; font-weight: 800; }
+.user-race-comment-field textarea { width: 100%; min-height: 180px; padding: 10px 12px; border: 1px solid #b8c8d5; border-radius: 9px; resize: vertical; }
+.user-race-comment-field textarea:focus { border-color: var(--blue); outline: 3px solid rgba(22,119,200,.14); }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; padding: 20px; display: grid; place-items: center; background: rgba(14, 30, 52, .56); }
 .modal-backdrop[hidden] { display: none !important; }
@@ -391,28 +398,181 @@ textarea { resize: vertical; }
 }
 
 @media (max-width: 760px) {
-  .app-header { min-height: 128px; padding: 13px 16px; flex-wrap: wrap; gap: 8px 16px; }
-  .app-header > div:first-child { width: 100%; }
+  body { font-size: 14px; line-height: 1.4; }
+  .app-header { min-height: 0; padding: 7px 8px; flex-wrap: wrap; gap: 5px 8px; }
+  .app-header > div:first-child { width: auto; flex: 1 1 auto; min-width: 0; }
+  .app-header .eyebrow { display: none; }
+  .app-header h1 { overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
   .web-user { margin-left: auto; }
-  .web-user span { max-width: 145px; }
+  .web-user span { display: none; }
+  .web-user .secondary-button { min-height: 28px; padding: 3px 7px; font-size: 10px; }
   .login-screen { padding: 16px; }
   .login-card { padding: 26px 20px; }
-  .view-tabs { flex: 1; }
-  .view-tab { flex: 1; padding-inline: 10px; }
+  .view-tabs { order: 3; flex: 0 0 100%; gap: 2px; padding: 2px; }
+  .view-tab { min-height: 29px; flex: 1; padding: 3px 7px; font-size: 11px; }
   .header-status { display: none; }
-  .race-workspace { height: auto; min-height: calc(100vh - 128px); padding: 10px; grid-template-columns: 1fr; }
+  .race-workspace { height: auto; min-height: calc(100vh - 70px); padding: 4px; grid-template-columns: 1fr; gap: 6px; }
+  .race-control-panel, .race-detail-panel { border-radius: 8px; box-shadow: 0 6px 18px rgba(24, 47, 75, .08); }
   .race-control-panel { max-height: none; }
+  .race-control-copy { padding: 10px 10px 6px; }
+  .race-control-copy h2 { font-size: 17px; }
+  .race-control-copy p:last-child { margin-top: 3px; font-size: 11px; }
+  .panel-kicker { margin-bottom: 1px; font-size: 10px; }
+  .race-date-search-form { padding: 0 10px 8px; gap: 5px; }
+  .race-date-search-form input, .race-date-search-form button { min-height: 34px; padding: 5px 7px; font-size: 11px; }
+  .daily-racecards { max-height: 260px; padding: 0 10px 8px; }
+  .daily-race-count { margin-bottom: 5px; font-size: 10px; }
+  .daily-venue { margin-bottom: 7px; }
+  .daily-venue h3 { margin-bottom: 4px; font-size: 13px; }
+  .daily-race-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+  .daily-race-button { padding: 4px 3px; border-radius: 6px; }
+  .daily-race-button strong { font-size: 13px; }
+  .daily-race-button span { font-size: 10px; }
+  .daily-race-button small { font-size: 8px; }
+  .direct-import-details summary { padding: 7px 10px; font-size: 10px; }
   .race-detail-panel { min-height: 70vh; }
-  .race-detail-header { align-items: flex-start; flex-direction: column; }
-  .race-header-actions { width: 100%; align-items: stretch; flex-direction: column; }
-  .race-header-actions button { width: 100%; }
-  .index-note { flex-direction: column; gap: 3px; }
+  .race-detail-header {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+    padding: 9px 10px;
+  }
+  .race-detail-header h2 { margin-top: 1px; font-size: 18px; line-height: 1.2; }
+  .race-meta { font-size: 11px; line-height: 1.25; }
+  .race-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.25fr;
+    width: 100%;
+    gap: 4px;
+  }
+  .race-header-actions .save-state {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    line-height: 1;
+  }
+  .race-header-actions button {
+    width: 100%;
+    min-height: 30px;
+    padding: 3px 4px;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  #raceSaveButton { grid-column: auto; }
+  .index-note { margin: 5px 6px 0; padding: 5px 7px; flex-direction: row; gap: 5px; font-size: 10px; line-height: 1.3; }
+  .line-display {
+    margin: 5px 6px 0;
+    padding: 5px 6px;
+    display: grid;
+    grid-template-columns: auto minmax(60px, 1fr) auto;
+    align-items: center;
+    gap: 4px 6px;
+  }
+  .line-display-title { font-size: 10px; }
+  .line-groups { min-width: 0; flex-wrap: nowrap; gap: 6px; overflow-x: auto; }
+  .line-group { flex: none; gap: 2px; }
+  .line-group + .line-group::before { margin-right: 3px; }
+  .line-display .bike-number { width: 22px; height: 22px; border-radius: 4px; font-size: 11px; }
+  .field-type-filter { grid-column: auto; width: auto; min-width: 0; margin: 0; padding: 2px 3px; justify-content: flex-end; gap: 3px; border-radius: 4px; }
+  .field-type-filter legend { display: none; }
+  .field-type-filter label { flex-direction: row; gap: 1px; font-size: 9px; line-height: 1; }
+  .field-type-filter input { width: 11px; height: 11px; margin: 0; }
+  .external-comment-status { margin: 4px 6px 0; padding: 4px 6px; border-radius: 6px; font-size: 10px; line-height: 1.3; }
+  .race-table-wrap { margin-top: 5px; }
+  .race-table { font-size: 11px; }
+  .race-table th, .race-table td { padding: 4px; }
+  .race-table .sticky-bike {
+    width: 38px;
+    min-width: 38px;
+    padding-inline: 3px;
+  }
+  .race-table .sticky-name {
+    left: 38px;
+    width: 132px;
+    min-width: 132px;
+    padding-inline: 5px;
+  }
+  .race-table .sticky-name strong { font-size: 12px; line-height: 1.15; }
+  .race-table .sticky-name small { font-size: 9px; line-height: 1.15; }
+  .athlete-venue-button { font-size: 12px; line-height: 1.15; }
+  .name-incident-summary { gap: 2px; margin: 2px 0; }
+  .name-incident-summary span {
+    padding: 1px 2px;
+    font-size: 8px;
+    line-height: 1.1;
+  }
+  .name-incident-summary b { margin-left: 0; font-size: 9px; }
+  .incident-label { font-size: 0; }
+  .incident-label::after {
+    content: attr(data-short);
+    font-size: 8px;
+  }
+  .bike-number {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    font-size: 12px;
+  }
+  .comment-column { width: 96px; min-width: 96px; }
+  .external-comment-button {
+    min-width: 0;
+    width: 84px;
+    padding: 4px 3px;
+    border-radius: 5px;
+    font-size: 9px;
+    line-height: 1.15;
+  }
+  .comment-button-label { font-size: 0; }
+  .comment-button-label::after {
+    content: attr(data-short);
+    font-size: 9px;
+  }
+  .user-comment-column { width: 88px; min-width: 88px; }
+  .user-comment-button { min-width: 0; width: 76px; padding: 4px 3px; border-radius: 5px; font-size: 9px; line-height: 1.15; }
+  .s-stat-button { min-width: 44px; padding: 3px 4px; border-radius: 5px; }
+  .s-stat-button .stat-value { font-size: 13px; }
+  .s-stat-button small { font-size: 8px; }
+  .index-pill { min-width: 36px; min-height: 28px; padding: 2px 5px; font-size: 14px; }
+  .index-pill.muted { font-size: 10px; }
+  .coverage { margin-top: 1px; font-size: 9px; line-height: 1.15; }
+  .formation-column { width: 184px; min-width: 184px; }
+  .formation-performance { gap: 3px; }
+  .formation-heading { gap: 4px; }
+  .formation-heading strong { font-size: 13px; }
+  .formation-heading small, .formation-performance.unavailable small { font-size: 8px; }
+  .formation-rates { gap: 2px; }
+  .formation-rates span { padding: 2px; gap: 0; border-radius: 4px; }
+  .formation-rates small { font-size: 8px; }
+  .formation-rates strong { font-size: 11px; }
+  .formation-performance.unavailable { min-height: 32px; }
+  .user-race-comment-dialog { padding: 14px; }
+  .user-race-comment-field { margin-top: 9px; }
+  .user-race-comment-field textarea { min-height: 150px; padding: 8px; font-size: 13px; }
+  .hole-candidates { margin: 8px 6px 10px; padding: 8px; }
+  .hole-candidates h3 { margin-bottom: 5px; font-size: 13px; }
+  .hole-candidate-card { padding: 6px 8px; }
+  .hole-candidate-card + .hole-candidate-card { margin-top: 5px; }
+  .hole-candidate-card p, .hole-candidate-none { font-size: 11px; line-height: 1.3; }
   .workspace { height: auto; min-height: calc(100vh - 84px); padding: 10px; grid-template-columns: 1fr; }
   .search-pane { max-height: 50vh; }
   .detail-pane { min-height: 70vh; }
-  .editor-toolbar { align-items: flex-start; flex-direction: column; }
-  .toolbar-actions { width: 100%; }
-  .toolbar-actions button { flex: 1; }
+  .editor-toolbar {
+    position: static;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+    padding: 9px 10px;
+  }
+  .editor-toolbar h2 { font-size: 17px; line-height: 1.2; }
+  .identity-line { gap: 6px; }
+  .registration-badge { padding: 2px 6px; font-size: 11px; }
+  .toolbar-actions { width: auto; margin-left: auto; gap: 5px; }
+  .toolbar-actions button {
+    flex: none;
+    min-height: 32px;
+    padding: 4px 9px;
+    font-size: 11px;
+  }
   .panel-section { margin: 12px; padding: 14px; }
   .profile-grid, .notes-grid, .evaluation-grid { grid-template-columns: 1fr; }
   .evaluation-item { grid-template-columns: 1fr 110px; }

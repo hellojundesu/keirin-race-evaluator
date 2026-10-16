@@ -35,7 +35,8 @@ const raceColumnDefinitions = {
   leg_rating: { label: "今日の脚評価" },
   inspection_comment: { label: "前検コメント", className: "comment-column" },
   result_comment: { label: "レース後コメント", className: "comment-column" },
-  user_comment: { label: "個人的レースコメント", className: "comment-column" },
+  profile_comment: { label: "選手寸評", className: "comment-column profile-comment-column" },
+  user_comment: { label: "個人的レースコメント", className: "comment-column user-comment-column" },
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -84,6 +85,13 @@ const elements = {
   externalCommentTitle: $("#externalCommentTitle"),
   externalCommentSubtitle: $("#externalCommentSubtitle"),
   externalCommentBody: $("#externalCommentBody"),
+  userRaceCommentModal: $("#userRaceCommentModal"),
+  userRaceCommentClose: $("#userRaceCommentClose"),
+  userRaceCommentCancel: $("#userRaceCommentCancel"),
+  userRaceCommentApply: $("#userRaceCommentApply"),
+  userRaceCommentTitle: $("#userRaceCommentTitle"),
+  userRaceCommentSubtitle: $("#userRaceCommentSubtitle"),
+  userRaceCommentInput: $("#userRaceCommentInput"),
   venueStatsModal: $("#venueStatsModal"),
   venueStatsClose: $("#venueStatsClose"),
   venueStatsTitle: $("#venueStatsTitle"),
@@ -187,11 +195,13 @@ async function initialize() {
     raceState.availableColumns = columnPreference.available.map((item) => item.key);
     columnPreference.available.forEach((item) => {
       raceColumnDefinitions[item.key] = {
-        label: item.label,
+        label: item.key === "profile_comment" ? "選手寸評" : item.label,
         group: item.group,
         className: item.key === "formation_performance"
           ? "formation-column"
-          : (["source_comment", "profile_comment", "user_comment"].includes(item.key) ? "comment-column" : ""),
+          : (item.key === "profile_comment"
+              ? "comment-column profile-comment-column"
+              : (["source_comment", "user_comment"].includes(item.key) ? "comment-column" : "")),
       };
     });
     populateSelect(elements.classFilter, state.options.classes);
@@ -366,10 +376,10 @@ function incidentNameSummary(entry) {
     return '<div class="name-incident-summary unavailable">異常結果 未取込</div>';
   }
   return `<div class="name-incident-summary" title="直近1年 ${stats.period_start}～${stats.period_end}">
-    <span class="fall-abandon">落棄 <b>${stats.fall_abandon_count || 0}</b></span>
-    <span class="fall-remount">再乗 <b>${stats.fall_remount_count || 0}</b></span>
-    <span class="disqualified">失格 <b>${stats.disqualified_count || 0}</b></span>
-    <span class="other-abandon">他棄 <b>${stats.other_abandon_count || 0}</b></span>
+    <span class="fall-abandon"><i class="incident-label" data-short="落">落棄</i> <b>${stats.fall_abandon_count || 0}</b></span>
+    <span class="fall-remount"><i class="incident-label" data-short="再">再乗</i> <b>${stats.fall_remount_count || 0}</b></span>
+    <span class="disqualified"><i class="incident-label" data-short="失">失格</i> <b>${stats.disqualified_count || 0}</b></span>
+    <span class="other-abandon"><i class="incident-label" data-short="他">他棄</i> <b>${stats.other_abandon_count || 0}</b></span>
   </div>`;
 }
 
@@ -386,10 +396,11 @@ function raceColumnCell(key, entry) {
     chaos_index: () => indexCell(entry.chaos_index),
     relative_score_index: () => indexCell(entry.relative_score_index),
     previous_leg: () => `<span class="previous-leg">${escapeHtml(previousLegText(entry))}</span>`,
-    inspection_comment: () => `<button type="button" class="external-comment-button" data-external-comment="inspection" data-registration="${entry.registration_no}">${entry.inspection_comment ? "前検コメントを見る" : "コメントなし"}</button>`,
-    result_comment: () => `<button type="button" class="external-comment-button" data-external-comment="result" data-registration="${entry.registration_no}">${entry.result_comment ? "レース後コメントを見る" : "コメントなし"}</button>`,
+    inspection_comment: () => `<button type="button" class="external-comment-button" data-external-comment="inspection" data-registration="${entry.registration_no}">${entry.inspection_comment ? '<span class="comment-button-label" data-short="前検を見る">前検コメントを見る</span>' : "コメントなし"}</button>`,
+    result_comment: () => `<button type="button" class="external-comment-button" data-external-comment="result" data-registration="${entry.registration_no}">${entry.result_comment ? '<span class="comment-button-label" data-short="レース後を見る">レース後コメントを見る</span>' : "コメントなし"}</button>`,
+    profile_comment: () => `<button type="button" class="external-comment-button" data-external-comment="profile" data-registration="${entry.registration_no}">${entry.profile_comment ? '<span class="comment-button-label" data-short="寸評を見る">選手寸評を見る</span>' : "寸評なし"}</button>`,
     leg_rating: () => `<select class="leg-rating" aria-label="${escapeHtml(entry.official_name)}の今日の脚評価"><option value="">未評価</option>${["◎", "◯", "△", "✕"].map((code) => `<option value="${code}" ${entry.leg_rating === code ? "selected" : ""}>${code}</option>`).join("")}</select>`,
-    user_comment: () => `<textarea class="race-comment" rows="2" maxlength="1000" aria-label="${escapeHtml(entry.official_name)}のコメント" placeholder="確認したい内容を記録">${escapeHtml(entry.user_comment || "")}</textarea>`,
+    user_comment: () => `<button type="button" class="user-comment-button ${entry.user_comment ? "has-comment" : ""}" data-user-comment="${entry.registration_no}" title="${escapeHtml(entry.user_comment || "")}">${entry.user_comment ? "コメントあり" : "コメント入力"}</button>`,
   };
   const definition = raceColumnDefinitions[key];
   let content;
@@ -469,6 +480,43 @@ function closeExternalComment() {
   elements.externalCommentModal.hidden = true;
 }
 
+function closeUserRaceComment() {
+  const registrationNo = elements.userRaceCommentModal.dataset.registration;
+  elements.userRaceCommentModal.hidden = true;
+  delete elements.userRaceCommentModal.dataset.registration;
+  if (registrationNo) {
+    elements.raceEntries.querySelector(`[data-user-comment="${registrationNo}"]`)?.focus();
+  }
+}
+
+function openUserRaceComment(registrationNo) {
+  const entry = raceState.selectedData?.entries.find((item) => String(item.registration_no) === String(registrationNo));
+  if (!entry) return;
+  const race = raceState.selectedData.race;
+  elements.userRaceCommentModal.dataset.registration = registrationNo;
+  elements.userRaceCommentTitle.textContent = entry.official_name;
+  elements.userRaceCommentSubtitle.textContent = `${race.venue_name} ${race.race_number}R`;
+  elements.userRaceCommentInput.value = entry.user_comment || "";
+  elements.userRaceCommentModal.hidden = false;
+  elements.userRaceCommentInput.focus();
+}
+
+function applyUserRaceComment() {
+  const registrationNo = elements.userRaceCommentModal.dataset.registration;
+  const entry = raceState.selectedData?.entries.find((item) => String(item.registration_no) === String(registrationNo));
+  if (!entry) return;
+  entry.user_comment = elements.userRaceCommentInput.value;
+  const button = elements.raceEntries.querySelector(`[data-user-comment="${registrationNo}"]`);
+  if (button) {
+    const hasComment = Boolean(entry.user_comment.trim());
+    button.textContent = hasComment ? "コメントあり" : "コメント入力";
+    button.classList.toggle("has-comment", hasComment);
+    button.title = entry.user_comment;
+  }
+  setRaceDirty(true);
+  closeUserRaceComment();
+}
+
 function closeVenueStats() {
   elements.venueStatsModal.hidden = true;
 }
@@ -538,10 +586,15 @@ function openExternalComment(registrationNo, type) {
   );
   if (!entry) return;
   const isInspection = type === "inspection";
-  elements.externalCommentKicker.textContent = isInspection ? "前検コメント" : "レース後コメント";
+  const isProfile = type === "profile";
+  elements.externalCommentKicker.textContent = isProfile ? "選手寸評" : (isInspection ? "前検コメント" : "レース後コメント");
   elements.externalCommentTitle.textContent = entry.official_name;
   elements.externalCommentSubtitle.textContent = `${raceState.selectedData.race.venue_name} ${raceState.selectedData.race.race_number}R`;
-  if (isInspection) {
+  if (isProfile) {
+    elements.externalCommentBody.innerHTML = entry.profile_comment
+      ? `<section class="comment-day-section"><h3>選手寸評</h3><p>${escapeHtml(entry.profile_comment).replaceAll("\n", "<br>")}</p></section>`
+      : '<p class="comment-empty">寸評なし</p>';
+  } else if (isInspection) {
     elements.externalCommentBody.innerHTML = entry.inspection_comment
       ? `<section class="comment-day-section"><h3>前検</h3><p>${escapeHtml(entry.inspection_comment).replaceAll("\n", "<br>")}</p></section>`
       : '<p class="comment-empty">コメントなし</p>';
@@ -602,7 +655,7 @@ async function saveRaceReviews() {
     return {
       registration_no: entry.registration_no,
       leg_rating: row.querySelector(".leg-rating")?.value ?? entry.leg_rating ?? "",
-      user_comment: row.querySelector(".race-comment")?.value ?? entry.user_comment ?? "",
+      user_comment: entry.user_comment ?? "",
     };
   });
   elements.raceSaveButton.disabled = true;
@@ -874,6 +927,8 @@ elements.raceEntries.addEventListener("click", (event) => {
   if (commentButton) {
     openExternalComment(commentButton.dataset.registration, commentButton.dataset.externalComment);
   }
+  const userCommentButton = event.target.closest("[data-user-comment]");
+  if (userCommentButton) openUserRaceComment(userCommentButton.dataset.userComment);
 });
 elements.lineDisplay.addEventListener("change", (event) => {
   const input = event.target.closest('input[name="fieldType"]');
@@ -901,6 +956,12 @@ elements.sStatsModal.addEventListener("click", (event) => {
 elements.externalCommentClose.addEventListener("click", closeExternalComment);
 elements.externalCommentModal.addEventListener("click", (event) => {
   if (event.target === elements.externalCommentModal) closeExternalComment();
+});
+elements.userRaceCommentClose.addEventListener("click", closeUserRaceComment);
+elements.userRaceCommentCancel.addEventListener("click", closeUserRaceComment);
+elements.userRaceCommentApply.addEventListener("click", applyUserRaceComment);
+elements.userRaceCommentModal.addEventListener("click", (event) => {
+  if (event.target === elements.userRaceCommentModal) closeUserRaceComment();
 });
 elements.venueStatsClose.addEventListener("click", closeVenueStats);
 elements.venueStatsModal.addEventListener("click", (event) => {
@@ -956,6 +1017,7 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !elements.columnCustomizer.hidden) closeColumnCustomizer();
   if (event.key === "Escape" && !elements.sStatsModal.hidden) closeSStats();
   if (event.key === "Escape" && !elements.externalCommentModal.hidden) closeExternalComment();
+  if (event.key === "Escape" && !elements.userRaceCommentModal.hidden) closeUserRaceComment();
   if (event.key === "Escape" && !elements.venueStatsModal.hidden) closeVenueStats();
 });
 

@@ -69,21 +69,21 @@
         <button id="raceImportButton" type="submit" class="primary-button">取得して表示</button>
       </form>
       </details>
-      <div class="race-filter-row">
+      <div class="race-filter-row" hidden>
         <label>
           <span>保存済みレースの日付</span>
           <input id="raceDateFilter" type="date">
         </label>
         <button id="raceDateClear" type="button" class="secondary-button">全日付</button>
       </div>
-      <div id="raceList" class="race-list" aria-label="保存済みレース"></div>
+      <div id="raceList" class="race-list" aria-label="保存済みレース" hidden></div>
     </section>
 
     <section class="race-detail-panel" aria-live="polite">
       <div id="raceEmptyState" class="race-empty-state">
         <div class="empty-mark">輪</div>
         <h2>レースを選択してください</h2>
-        <p>公開出走表を取り込むか、保存済みレースを選ぶと指数と評価を確認できます。</p>
+        <p>開催日からレースを検索し、対象レースを選ぶと指数と評価を確認できます。</p>
       </div>
       <div id="raceDetail" hidden>
         <div class="race-detail-header">
@@ -258,6 +258,27 @@
         <button id="externalCommentClose" type="button" class="icon-button" aria-label="閉じる">×</button>
       </div>
       <div id="externalCommentBody" class="external-comment-body"></div>
+    </section>
+  </div>
+
+  <div id="userRaceCommentModal" class="modal-backdrop" hidden>
+    <section class="customizer-dialog user-race-comment-dialog" role="dialog" aria-modal="true" aria-labelledby="userRaceCommentTitle">
+      <div class="customizer-header">
+        <div>
+          <p class="panel-kicker">個人的レースコメント</p>
+          <h2 id="userRaceCommentTitle">個人的レースコメント</h2>
+          <p id="userRaceCommentSubtitle" class="s-stats-subtitle"></p>
+        </div>
+        <button id="userRaceCommentClose" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+      <label class="user-race-comment-field">
+        <span>コメント</span>
+        <textarea id="userRaceCommentInput" rows="7" maxlength="1000" placeholder="確認したい内容を記録"></textarea>
+      </label>
+      <div class="customizer-actions">
+        <button id="userRaceCommentCancel" type="button" class="secondary-button">キャンセル</button>
+        <button id="userRaceCommentApply" type="button" class="primary-button">コメントを反映</button>
+      </div>
     </section>
   </div>
 
