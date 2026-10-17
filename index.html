@@ -6,7 +6,7 @@
   <title>競輪レース評価ツール</title>
   <meta name="description" content="公開出走表と登録番号DBを組み合わせた競輪レース評価・脚評価管理画面">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20261014-web-auth">
+  <link rel="stylesheet" href="styles.css?v=20261016-venue-tab">
 </head>
 <body class="web-locked">
   <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
@@ -31,6 +31,7 @@
     <nav class="view-tabs" aria-label="表示切替">
       <button class="view-tab active" type="button" data-view="race" aria-pressed="true">出走表</button>
       <button class="view-tab" type="button" data-view="athlete" aria-pressed="false">選手管理</button>
+      <button class="view-tab" type="button" data-view="venue" aria-pressed="false">場別成績</button>
     </nav>
     <div class="header-status">
       <span class="status-dot" aria-hidden="true"></span>
@@ -112,6 +113,61 @@
         </div>
         <section id="holeCandidates" class="hole-candidates" aria-live="polite"></section>
       </div>
+    </section>
+  </main>
+
+  <main id="venueWorkspace" class="venue-page view-workspace" hidden>
+    <section class="venue-page-header">
+      <div>
+        <p class="panel-kicker">直近3年間の実走データ</p>
+        <h2 id="venuePageTitle">選手別・競輪場成績</h2>
+      </div>
+      <p id="venuePagePeriod" class="venue-page-period">データ読込前</p>
+    </section>
+
+    <nav class="venue-mode-tabs" aria-label="場別成績の表示切替">
+      <button type="button" class="active" data-venue-mode="athlete">選手別成績</button>
+      <button type="button" data-venue-mode="trend">競輪場の決まり手傾向</button>
+    </nav>
+
+    <section id="venueAthleteView">
+      <section class="venue-panel venue-controls-panel">
+        <div class="venue-gender-tabs" role="tablist">
+          <button type="button" class="active male" data-venue-gender="male">男子選手</button>
+          <button type="button" class="female" data-venue-gender="female">ガールズ選手</button>
+        </div>
+        <div class="venue-controls">
+          <label><span>選手名検索（漢字・カナ）</span><input id="venueAthleteSearch" type="search" autocomplete="off" placeholder="例：古性 または コショウ"></label>
+          <label><span>級班で絞り込み</span><select id="venueClassFilter"><option value="">すべての級班</option></select></label>
+          <label><span>あいうえお順から選択</span><select id="venueAthleteSelect"><option value="">選択なし</option></select></label>
+          <label><span>競輪場を選択</span><select id="venueAthleteVenue"><option value="">全競輪場</option></select></label>
+        </div>
+        <p id="venueAthleteCount" class="venue-help"></p>
+      </section>
+      <section id="venueAthleteEmpty" class="venue-panel venue-empty"><strong>選手を選択してください</strong><span>名前検索または、あいうえお順の一覧から選べます。</span></section>
+      <section id="venueAthleteDetail" class="venue-panel" hidden>
+        <div class="venue-athlete-head"><div><h3 id="venueAthleteName"></h3><p id="venueAthleteKana"></p></div><strong id="venueAthleteTotal"></strong></div>
+        <div class="venue-table-wrap"><table class="venue-table"><thead><tr><th>競輪場</th><th>出走</th><th>1着</th><th>勝率</th><th>2連対</th><th>2連対率</th><th>3連対</th><th>3連対率</th><th>決まり手（逃・捲・差・マ）</th></tr></thead><tbody id="venueAthleteRows"></tbody></table></div>
+        <p class="venue-help">率の分母は実出走。欠場は除外し、棄権・失格は実出走に含みます。</p>
+      </section>
+    </section>
+
+    <section id="venueTrendView" hidden>
+      <section class="venue-panel venue-controls-panel">
+        <div class="venue-controls venue-trend-controls">
+          <label><span>競輪場を選択</span><select id="venueTrendVenue"><option value="">選択なし</option></select></label>
+          <label><span>集計期間</span><span class="venue-period-buttons"><button type="button" data-venue-period="3" class="active">3年</button><button type="button" data-venue-period="2">2年</button><button type="button" data-venue-period="1">1年</button></span></label>
+          <label><span>開催区分</span><select id="venueTrendGrade"><option value="">すべて</option><option>F2</option><option>F1</option><option>G3</option><option>G2</option><option>G1</option><option>GP</option></select></label>
+          <label><span>時間帯</span><select id="venueTrendSession"><option value="">すべて</option><option value="morning">モーニング</option><option value="day">デイ</option><option value="night">ナイター</option><option value="midnight">ミッドナイト</option></select></label>
+        </div>
+      </section>
+      <section id="venueTrendEmpty" class="venue-panel venue-empty"><strong>競輪場を選択してください</strong><span>選択した競輪場のデータだけをSupabaseから読み込みます。</span></section>
+      <section id="venueTrendDetail" class="venue-panel" hidden>
+        <div class="venue-trend-head"><div><h3 id="venueTrendTitle"></h3><div id="venueBankInfo" class="venue-bank-info"></div><p id="venueTrendFilterLabel"></p></div><strong id="venueTrendRaceCount"></strong></div>
+        <div class="venue-trend-grid"><article id="venueFirstCard" class="venue-trend-card"></article><article id="venueSecondCard" class="venue-trend-card"></article></div>
+        <article class="venue-payout-card"><div class="venue-payout-heading"><h3>平均配当</h3><label><span>車立て</span><select id="venueTrendFieldSize"><option value="0">すべて</option><option value="7">7車立て</option><option value="9">9車立て</option></select></label></div><div id="venuePayoutContent"></div></article>
+        <p class="venue-help">決まり手率の分母は、各着順で決まり手を取得できた件数です。</p>
+      </section>
     </section>
   </main>
 
@@ -297,8 +353,9 @@
   </div>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="config.js?v=20261014-web-auth" defer></script>
-  <script src="web-api.js?v=20261014-web-auth" defer></script>
-  <script src="app.js?v=20261014-web-auth" defer></script>
+  <script src="config.js?v=20261016-venue-tab" defer></script>
+  <script src="web-api.js?v=20261016-venue-tab" defer></script>
+  <script src="venue-tab.js?v=20261016-venue-tab" defer></script>
+  <script src="app.js?v=20261016-venue-tab" defer></script>
 </body>
 </html>

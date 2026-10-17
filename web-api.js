@@ -244,6 +244,26 @@
     };
   }
 
+  async function venueStatsCatalog() {
+    const [index, metadata] = await Promise.all([
+      getSnapshot("venue_stats_index", "global"),
+      getSnapshot("venue_stats_meta", "global"),
+    ]);
+    return { ...index, metadata };
+  }
+
+  async function venueAthleteStats(registrationNo) {
+    const [athlete, metadata] = await Promise.all([
+      getSnapshot("venue_stats", registrationNo),
+      getSnapshot("venue_stats_meta", "global"),
+    ]);
+    return { athlete, metadata };
+  }
+
+  async function venueOverview(venueCode) {
+    return getSnapshot("venue_overview", String(venueCode || "").padStart(2, "0"));
+  }
+
   async function request(path, options = {}) {
     await ensureSession();
     const url = new URL(path, window.location.origin);
@@ -267,6 +287,11 @@
       return { ok: true, columns: body.columns, saved_at: new Date().toISOString() };
     }
     if (method === "GET" && url.pathname === "/api/races") return raceList(url.searchParams.get("date") || "");
+    if (method === "GET" && url.pathname === "/api/venue-stats/catalog") return venueStatsCatalog();
+    const venueAthletePageMatch = url.pathname.match(/^\/api\/venue-stats\/athletes\/(\d{5,6})$/);
+    if (venueAthletePageMatch && method === "GET") return venueAthleteStats(venueAthletePageMatch[1]);
+    const venueOverviewMatch = url.pathname.match(/^\/api\/venue-stats\/venues\/(\d{2})$/);
+    if (venueOverviewMatch && method === "GET") return venueOverview(venueOverviewMatch[1]);
     if (method === "GET" && url.pathname === "/api/racecards/by-date") {
       const dateValue = url.searchParams.get("date") || "";
       const races = (await raceList(dateValue)).items;

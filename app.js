@@ -45,6 +45,7 @@ const elements = {
   viewTabs: document.querySelectorAll("[data-view]"),
   raceWorkspace: $("#raceWorkspace"),
   athleteWorkspace: $("#athleteWorkspace"),
+  venueWorkspace: $("#venueWorkspace"),
   raceDateSearchForm: $("#raceDateSearchForm"),
   raceDiscoveryDate: $("#raceDiscoveryDate"),
   raceDateSearchButton: $("#raceDateSearchButton"),
@@ -164,21 +165,23 @@ function populateSelect(select, values, currentLabel = "すべて") {
 }
 
 function switchView(view) {
-  if (view === "athlete" && raceState.dirty) {
+  if (view !== "race" && raceState.dirty) {
     if (!window.confirm("保存していない脚評価・コメントがあります。破棄して移動しますか？")) return;
     setRaceDirty(false);
   }
-  if (view === "race" && state.dirty) {
+  if (view !== "athlete" && state.dirty) {
     if (!window.confirm("保存していない選手情報があります。破棄して移動しますか？")) return;
     setDirty(false);
   }
   elements.raceWorkspace.hidden = view !== "race";
   elements.athleteWorkspace.hidden = view !== "athlete";
+  elements.venueWorkspace.hidden = view !== "venue";
   elements.viewTabs.forEach((button) => {
     const active = button.dataset.view === view;
     button.classList.toggle("active", active);
     button.setAttribute("aria-pressed", String(active));
   });
+  if (view === "venue") window.keirinVenueTab?.activate();
 }
 
 async function initialize() {
