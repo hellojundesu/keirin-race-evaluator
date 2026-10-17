@@ -144,7 +144,7 @@
 .venue-table th:first-child,
 .venue-table td:first-child { position: sticky; left: 0; z-index: 1; background: #fff; text-align: left; font-weight: 800; }
 .venue-table th:first-child { background: #eef4f8; }
-.venue-trend-controls { grid-template-columns: 1.15fr 1fr 1fr 1fr; }
+.venue-trend-controls { grid-template-columns: 1.15fr repeat(4, minmax(0, 1fr)); }
 .venue-bank-info { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .venue-bank-info span { padding: 4px 8px; border-radius: 999px; background: #eaf2f7; color: #31536c; font-size: 12px; font-weight: 700; }
 .venue-trend-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
@@ -160,13 +160,15 @@
 .venue-trend-card td:first-child { text-align: left; }
 .venue-bar { display: block; height: 6px; margin-top: 4px; overflow: hidden; border-radius: 999px; background: #e4ebf1; }
 .venue-bar i { display: block; height: 100%; border-radius: inherit; background: #2583bd; }
-.venue-payout-card { margin-top: 12px; }
-.venue-payout-heading { margin-bottom: 10px; }
-.venue-payout-heading label { grid-template-columns: auto 120px; align-items: center; }
+.venue-payout-card { margin-top: 12px; background: #fff; }
+.venue-payout-heading { margin: -15px -15px 10px; padding: 12px 15px; border-radius: 11px 11px 0 0; background: #fff5e7; }
+.venue-payout-heading h3 { color: #734514; }
+.venue-payout-heading label { grid-template-columns: auto 120px; align-items: center; color: #734514; }
+.venue-payout-heading select { border-color: #d5b98e; background: #fff; }
 .venue-payout-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.venue-payout-item { padding: 10px; border-radius: 8px; background: #eef5f9; }
-.venue-payout-item strong { display: block; color: #657b8e; font-size: 11px; }
-.venue-payout-item b { display: block; margin-top: 3px; color: #123c5d; font-size: 17px; }
+.venue-payout-item { padding: 10px; border-radius: 8px; background: #fff; }
+.venue-payout-item strong { display: block; color: #0d3a5b; font-size: 11px; }
+.venue-payout-item b { display: block; margin-top: 3px; color: #b45d00; font-size: 17px; }
 .venue-payout-item p { margin: 4px 0 0; color: #60758a; font-size: 11px; line-height: 1.45; }
 
 @media (max-width: 1050px) {
@@ -219,7 +221,7 @@
   .venue-trend-summary span { padding: 5px 3px; font-size: 9px; }
   .venue-trend-card th,
   .venue-trend-card td { padding: 5px 3px; font-size: 10px; }
-  .venue-payout-heading { margin-bottom: 6px; }
+  .venue-payout-heading { margin: -9px -9px 6px; padding: 9px; border-radius: 8px 8px 0 0; }
   .venue-payout-heading h3 { font-size: 15px; }
   .venue-payout-heading label { grid-template-columns: auto 90px; gap: 4px; font-size: 9px; }
   .venue-payout-heading select { min-height: 31px; padding: 4px; font-size: 10px; }

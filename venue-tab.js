@@ -127,13 +127,16 @@
     if (!overview) return;
     const grade = byId("venueTrendGrade").value;
     const session = byId("venueTrendSession").value;
+    const decisionFieldSize = Number(byId("venueTrendDecisionFieldSize").value || 0);
     const fieldSize = Number(byId("venueTrendFieldSize").value || 0);
     const rows = (overview.decisionStats || []).filter((row) => row.periodYears === state.periodYears
-      && (!grade || row.gradeCode === grade) && (!session || row.sessionCode === session));
+      && (!grade || row.gradeCode === grade) && (!session || row.sessionCode === session)
+      && (!decisionFieldSize || Number(row.fieldSize || 0) === decisionFieldSize));
     const bank = overview.bank;
     byId("venueTrendTitle").textContent = `${overview.venueName}競輪場`;
     byId("venueBankInfo").innerHTML = bank ? `<span>${html(bank.lap)}mバンク</span><span>みなし直線 ${html(bank.straight)}m</span><span>最大カント ${html(bank.cant)}°</span>` : "";
-    byId("venueTrendFilterLabel").textContent = `過去${state.periodYears}年 ／ 開催区分 ${grade || "すべて"} ／ 時間帯 ${sessionLabels[session] || "すべて"}`;
+    const decisionFieldLabel = decisionFieldSize ? `${decisionFieldSize}車立て` : "すべて";
+    byId("venueTrendFilterLabel").textContent = `過去${state.periodYears}年 ／ 開催区分 ${grade || "すべて"} ／ 時間帯 ${sessionLabels[session] || "すべて"} ／ 車立て ${decisionFieldLabel}`;
     byId("venueTrendRaceCount").textContent = `対象 ${number(rows.reduce((sum, row) => sum + Number(row.raceCount || 0), 0))}レース`;
     byId("venueFirstCard").innerHTML = decisionCard("1着の決まり手", aggregatePosition(rows, "first"));
     byId("venueSecondCard").innerHTML = decisionCard("2着の決まり手", aggregatePosition(rows, "second"));
@@ -189,7 +192,7 @@
     byId("venueAthleteSelect").addEventListener("change", (event) => { state.selectedRegistration = event.target.value; loadAthleteDetail(); });
     byId("venueAthleteVenue").addEventListener("change", (event) => { state.selectedVenue = event.target.value; if (state.selectedRegistration) loadAthleteDetail(); });
     byId("venueTrendVenue").addEventListener("change", loadTrendVenue);
-    ["venueTrendGrade", "venueTrendSession", "venueTrendFieldSize"].forEach((id) => byId(id).addEventListener("change", renderTrend));
+    ["venueTrendGrade", "venueTrendSession", "venueTrendDecisionFieldSize", "venueTrendFieldSize"].forEach((id) => byId(id).addEventListener("change", renderTrend));
     document.querySelectorAll("[data-venue-period]").forEach((button) => button.addEventListener("click", () => {
       state.periodYears = Number(button.dataset.venuePeriod);
       document.querySelectorAll("[data-venue-period]").forEach((item) => item.classList.toggle("active", item === button));

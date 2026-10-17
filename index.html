@@ -6,7 +6,7 @@
   <title>競輪レース評価ツール</title>
   <meta name="description" content="公開出走表と登録番号DBを組み合わせた競輪レース評価・脚評価管理画面">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20261016-venue-tab">
+  <link rel="stylesheet" href="styles.css?v=20261017-payout-color">
 </head>
 <body class="web-locked">
   <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
@@ -159,6 +159,7 @@
           <label><span>集計期間</span><span class="venue-period-buttons"><button type="button" data-venue-period="3" class="active">3年</button><button type="button" data-venue-period="2">2年</button><button type="button" data-venue-period="1">1年</button></span></label>
           <label><span>開催区分</span><select id="venueTrendGrade"><option value="">すべて</option><option>F2</option><option>F1</option><option>G3</option><option>G2</option><option>G1</option><option>GP</option></select></label>
           <label><span>時間帯</span><select id="venueTrendSession"><option value="">すべて</option><option value="morning">モーニング</option><option value="day">デイ</option><option value="night">ナイター</option><option value="midnight">ミッドナイト</option></select></label>
+          <label><span>決まり手・車立て</span><select id="venueTrendDecisionFieldSize"><option value="0">すべて</option><option value="7">7車立て</option><option value="9">9車立て</option></select></label>
         </div>
       </section>
       <section id="venueTrendEmpty" class="venue-panel venue-empty"><strong>競輪場を選択してください</strong><span>選択した競輪場のデータだけをSupabaseから読み込みます。</span></section>
@@ -355,7 +356,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="config.js?v=20261016-venue-tab" defer></script>
   <script src="web-api.js?v=20261016-venue-tab" defer></script>
-  <script src="venue-tab.js?v=20261016-venue-tab" defer></script>
+  <script src="venue-tab.js?v=20261017-field-size" defer></script>
   <script src="app.js?v=20261016-venue-tab" defer></script>
 </body>
 </html>
