@@ -165,8 +165,8 @@
 .venue-payout-heading h3 { color: #734514; }
 .venue-payout-heading label { grid-template-columns: auto 120px; align-items: center; color: #734514; }
 .venue-payout-heading select { border-color: #d5b98e; background: #fff; }
-.venue-payout-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.venue-payout-item { padding: 10px; border-radius: 8px; background: #fff; }
+.venue-payout-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.venue-payout-item { padding: 12px 18px; border-radius: 8px; background: #fff; text-align: center; }
 .venue-payout-item strong { display: block; color: #0d3a5b; font-size: 11px; }
 .venue-payout-item b { display: block; margin-top: 3px; color: #b45d00; font-size: 17px; }
 .venue-payout-item p { margin: 4px 0 0; color: #60758a; font-size: 11px; line-height: 1.45; }
@@ -226,7 +226,7 @@
   .venue-payout-heading label { grid-template-columns: auto 90px; gap: 4px; font-size: 9px; }
   .venue-payout-heading select { min-height: 31px; padding: 4px; font-size: 10px; }
   .venue-payout-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
-  .venue-payout-item { padding: 7px; }
+  .venue-payout-item { padding: 7px; text-align: left; }
   .venue-payout-item strong,
   .venue-payout-item p { font-size: 9px; }
   .venue-payout-item b { font-size: 13px; }
