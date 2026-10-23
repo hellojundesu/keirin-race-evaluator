@@ -92,9 +92,11 @@
     return data;
   }
 
-  async function getSnapshot(recordType, recordKey) {
+  async function getSnapshot(recordType, recordKey, options = {}) {
     const cacheKey = `${recordType}\u0000${recordKey}`;
-    if (snapshotCache.has(cacheKey)) return structuredClone(snapshotCache.get(cacheKey));
+    if (!options.forceRefresh && snapshotCache.has(cacheKey)) {
+      return structuredClone(snapshotCache.get(cacheKey));
+    }
     const query = `/shared_snapshots?select=payload&record_type=eq.${encodeURIComponent(recordType)}&record_key=eq.${encodeURIComponent(recordKey)}&limit=1`;
     const rows = await restRequest("GET", query);
     if (!rows?.length) throw new Error(`Web用データがありません: ${recordType}/${recordKey}`);
@@ -118,7 +120,10 @@
   }
 
   async function raceList(dateValue = "") {
-    const data = await getSnapshot("races_index", "global");
+    // Race cards are updated by the daily sync while mobile tabs can remain open
+    // for days. Always refresh the small index so today's search cannot reuse a
+    // previous day's in-memory snapshot.
+    const data = await getSnapshot("races_index", "global", { forceRefresh: true });
     const reviews = await getOwnRows("user_race_reviews", "?select=race_id,registration_no,leg_rating,user_comment");
     const counts = new Map();
     reviews.forEach((row) => {
