@@ -236,7 +236,7 @@ async function loadRaces() {
 
 function renderRaceList() {
   if (!raceState.items.length) {
-    elements.raceList.innerHTML = '<p class="race-list-empty">この日付の保存済みレースはありません。</p>';
+    elements.raceList.innerHTML = '<p class="race-list-empty">この日付の出走表データはありません。</p>';
     return;
   }
   elements.raceList.innerHTML = raceState.items.map((race) => `
@@ -279,7 +279,7 @@ async function importRace(event) {
 
 function renderDailyRacecards(data) {
   if (!data.venues.length) {
-    elements.dailyRacecards.innerHTML = '<p class="race-list-empty">この日の開催レースはありません。</p>';
+    elements.dailyRacecards.innerHTML = '<p class="race-list-empty">この日の出走表データはありません。</p>';
     return;
   }
   elements.dailyRacecards.innerHTML = `

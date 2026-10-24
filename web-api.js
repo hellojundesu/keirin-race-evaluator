@@ -120,16 +120,31 @@
   }
 
   async function raceList(dateValue = "") {
-    // Race cards are updated by the daily sync while mobile tabs can remain open
-    // for days. Always refresh the small index so today's search cannot reuse a
-    // previous day's in-memory snapshot.
-    const data = await getSnapshot("races_index", "global", { forceRefresh: true });
+    // Race cards are updated by the daily sync while mobile tabs can remain
+    // open for days.  Always refresh the selected date index.  Keep the global
+    // index only for callers that do not specify a date.
+    let data;
+    try {
+      data = await getSnapshot(
+        "races_index",
+        dateValue || "global",
+        { forceRefresh: true },
+      );
+    } catch (error) {
+      // A missing date index means that no complete race-card data was saved
+      // for that day.  Do not substitute another date or the global index.
+      if (dateValue && String(error?.message || "").startsWith("Web用データがありません:")) {
+        data = { items: [] };
+      } else {
+        throw error;
+      }
+    }
     const reviews = await getOwnRows("user_race_reviews", "?select=race_id,registration_no,leg_rating,user_comment");
     const counts = new Map();
     reviews.forEach((row) => {
       if (row.leg_rating || row.user_comment) counts.set(row.race_id, (counts.get(row.race_id) || 0) + 1);
     });
-    data.items = data.items
+    data.items = (data.items || [])
       .filter((item) => !dateValue || item.race_date === dateValue)
       .map((item) => ({ ...item, reviewed_count: counts.get(item.race_id) || 0 }));
     return data;
