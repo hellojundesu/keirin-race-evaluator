@@ -104,6 +104,80 @@
     return structuredClone(rows[0].payload);
   }
 
+  function snapshotMissing(error) {
+    return String(error?.message || "").startsWith("Web用データがありません:");
+  }
+
+  function requireCloudGeneration(payload, manifest, expectedDate = "") {
+    const generation = manifest?.cloud_generation?.generation_id;
+    if (manifest?.dataset !== "cloud_acquisition_manifest" || manifest?.status !== "complete" || !generation) {
+      throw new Error("クラウド出走表は公開完了前です");
+    }
+    if (expectedDate && manifest.race_date !== expectedDate) throw new Error("クラウド出走表の日付が一致しません");
+    if (payload?.cloud_generation?.generation_id !== generation || payload?.cloud_generation?.generation_status !== "complete") {
+      throw new Error("クラウド出走表の世代が一致しません");
+    }
+    return generation;
+  }
+
+  async function cloudRaceList(dateValue) {
+    const [index, manifest] = await Promise.all([
+      getSnapshot("cloud_races_index", dateValue, { forceRefresh: true }),
+      getSnapshot("cloud_acquisition_manifest", dateValue, { forceRefresh: true }),
+    ]);
+    requireCloudGeneration(index, manifest, dateValue);
+    return {
+      date: dateValue,
+      source: "cloud_racecard",
+      cloud_fallback: true,
+      cloud_generation: manifest.cloud_generation,
+      items: (index.items || []).map((item) => ({ ...item, cloud_fallback: true })),
+    };
+  }
+
+  async function cloudRaceDetail(raceId, normalizedField) {
+    const raceDate = `${raceId.slice(0, 4)}-${raceId.slice(4, 6)}-${raceId.slice(6, 8)}`;
+    const [card, manifest] = await Promise.all([
+      getSnapshot("cloud_racecard", raceId, { forceRefresh: true }),
+      getSnapshot("cloud_acquisition_manifest", raceDate, { forceRefresh: true }),
+    ]);
+    requireCloudGeneration(card, manifest, raceDate);
+    if (card?.dataset !== "cloud_racecard_fact" || String(card?.race?.race_id || "") !== raceId) {
+      throw new Error("クラウド出走表のレースIDが一致しません");
+    }
+    const entries = (card.entries || []).map((entry) => ({
+      ...entry,
+      race_id: raceId,
+      frame_number: null,
+      inspection_comment: null,
+      result_comment: null,
+      cloud_fallback: true,
+    }));
+    if (entries.length < 5 || entries.length > 9) throw new Error("クラウド出走表の選手数が不正です");
+    if (["7", "9"].includes(normalizedField) && entries.length !== Number(normalizedField)) {
+      throw new Error(`${normalizedField}車条件に一致するクラウド出走表がありません`);
+    }
+    return {
+      race: {
+        ...card.race,
+        source: "cloud_racecard",
+        cloud_fallback: true,
+        field_type_filter: normalizedField,
+        data_generation: card.cloud_generation,
+        data_observed_at: card.observed_at || null,
+      },
+      entries,
+      cloud_fallback: true,
+      limitations: {
+        line_confirmed: card.race?.line_state === "fetched",
+        result_available: false,
+        payout_available: false,
+        analysis_available: false,
+        comments_available: false,
+      },
+    };
+  }
+
   async function getOwnRows(table, query = "") {
     return restRequest("GET", `/${table}${query}`);
   }
@@ -132,9 +206,13 @@
       );
     } catch (error) {
       // A missing date index means that no complete race-card data was saved
-      // for that day.  Do not substitute another date or the global index.
-      if (dateValue && String(error?.message || "").startsWith("Web用データがありません:")) {
-        data = { items: [] };
+      // for that day.  Use only a complete cloud generation for that same day;
+      // never substitute the global index or another date.
+      if (dateValue && snapshotMissing(error)) {
+        data = await cloudRaceList(dateValue).catch((cloudError) => {
+          if (snapshotMissing(cloudError)) return { date: dateValue, items: [] };
+          throw cloudError;
+        });
       } else {
         throw error;
       }
@@ -152,13 +230,19 @@
 
   async function raceDetail(raceId, fieldType) {
     const normalizedField = ["7", "9"].includes(fieldType) ? fieldType : "all";
-    const data = await getSnapshot("race_detail", `${raceId}:${normalizedField}`);
+    let data;
+    try {
+      data = await getSnapshot("race_detail", `${raceId}:${normalizedField}`);
+    } catch (error) {
+      if (!snapshotMissing(error)) throw error;
+      data = await cloudRaceDetail(raceId, normalizedField);
+    }
     const reviews = await getOwnRows(
       "user_race_reviews",
       `?select=registration_no,leg_rating,user_comment,updated_at&race_id=eq.${encodeURIComponent(raceId)}`,
     );
     const byAthlete = new Map(reviews.map((row) => [row.registration_no, row]));
-    data.entries.forEach((entry) => {
+    (data.entries || []).forEach((entry) => {
       const review = byAthlete.get(entry.registration_no);
       entry.leg_rating = review?.leg_rating || null;
       entry.user_comment = review?.user_comment || null;
@@ -314,13 +398,14 @@
     if (venueOverviewMatch && method === "GET") return venueOverview(venueOverviewMatch[1]);
     if (method === "GET" && url.pathname === "/api/racecards/by-date") {
       const dateValue = url.searchParams.get("date") || "";
-      const races = (await raceList(dateValue)).items;
+      const raceListData = await raceList(dateValue);
+      const races = raceListData.items;
       const grouped = new Map();
       races.forEach((race) => {
         if (!grouped.has(race.venue_code)) grouped.set(race.venue_code, { venue_code: race.venue_code, venue_name: race.venue_name, races: [] });
         grouped.get(race.venue_code).races.push(race);
       });
-      return { date: dateValue, venues: [...grouped.values()], race_count: races.length };
+      return { date: dateValue, venues: [...grouped.values()], race_count: races.length, source: raceListData.source || "race_detail" };
     }
     if (method === "POST" && url.pathname === "/api/races/import") {
       const raceId = String(body?.source || "").match(/\d{12}/)?.[0];
@@ -421,3 +506,4 @@
     },
   });
 })();
+
