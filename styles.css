@@ -796,3 +796,32 @@ textarea { resize: vertical; }
   .venue-stats-summary, .venue-stats-counts { grid-template-columns: repeat(2, 1fr); }
   .venue-decision-breakdown > div { grid-template-columns: repeat(2, 1fr); }
 }
+.cloud-data-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.4rem;
+  padding: 0.12rem 0.42rem;
+  border: 1px solid #3b82f6;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.68rem;
+  font-style: normal;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.cloud-data-time {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 0.68rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 520px) {
+  .cloud-data-badge {
+    margin-left: 0.25rem;
+    font-size: 0.62rem;
+  }
+  .cloud-data-time { display: block; margin-top: 0.25rem; font-size: 0.62rem; }
+}
+
