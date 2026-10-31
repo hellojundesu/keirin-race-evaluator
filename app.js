@@ -242,7 +242,7 @@ function renderRaceList() {
   elements.raceList.innerHTML = raceState.items.map((race) => `
     <button type="button" class="race-list-card ${race.race_id === raceState.selectedRaceId ? "active" : ""}" data-race-id="${race.race_id}">
       <span class="race-list-number">${race.race_number}R</span>
-      <span class="race-list-main"><strong>${escapeHtml(race.venue_name)}</strong><small>${escapeHtml(race.race_class || "クラス未取得")}・${escapeHtml(race.start_time || "発走時刻なし")}</small></span>
+      <span class="race-list-main"><strong>${escapeHtml(race.venue_name)}${race.cloud_fallback ? '<em class="cloud-data-badge">クラウド</em>' : ""}</strong><small>${escapeHtml(race.race_class || "クラス未取得")}・${escapeHtml(race.start_time || "発走時刻なし")}</small></span>
       <span class="race-list-review">脚評価 ${race.reviewed_count}/${race.starters || 0}</span>
     </button>
   `).join("");
@@ -290,7 +290,7 @@ function renderDailyRacecards(data) {
         <div class="daily-race-grid">
           ${venue.races.map((race) => `
             <button type="button" class="daily-race-button" data-race-source="${race.race_id}">
-              <strong>${race.race_number}R</strong>
+              <strong>${race.race_number}R${race.cloud_fallback ? '<em class="cloud-data-badge">クラウド</em>' : ""}</strong>
               <span>${escapeHtml(race.start_time || "時刻未定")}</span>
               <small>${escapeHtml(race.race_class || "クラス未取得")}${race.starters ? `・${race.starters}車` : ""}</small>
             </button>`).join("")}
@@ -439,15 +439,19 @@ function renderLineGroups(groups) {
 
 function renderRace() {
   const { race, entries } = raceState.selectedData;
+  const cloudFallback = Boolean(race.cloud_fallback || raceState.selectedData.cloud_fallback);
+  const limitations = raceState.selectedData.limitations || {};
   const inspectionCount = entries.filter((entry) => entry.inspection_comment).length;
   const resultCount = entries.filter((entry) => entry.result_comment).length;
   const fieldLabel = { all: "全成績", 7: "7車成績", 9: "9車成績" }[race.field_type_filter] || "全成績";
   elements.raceEmptyState.hidden = true;
   elements.raceDetail.hidden = false;
   elements.raceTitle.textContent = `${race.venue_name} ${race.race_number}R`;
-  elements.raceMeta.textContent = `${race.race_date}　${race.start_time || "発走時刻未取得"}　${race.race_class || "クラス未取得"}`;
+  elements.raceMeta.innerHTML = `${escapeHtml(race.race_date)}　${escapeHtml(race.start_time || "発走時刻未取得")}　${escapeHtml(race.race_class || "クラス未取得")}${cloudFallback ? `　<span class="cloud-data-badge">クラウド基本出走表</span>${race.data_observed_at ? ` <small class="cloud-data-time">取得 ${escapeHtml(race.data_observed_at)}</small>` : ""}` : ""}`;
   renderLineGroups(race.line_groups);
-  elements.externalCommentStatus.textContent = `WINTICKETコメント　前検 ${inspectionCount}/${entries.length}人・レース後 ${resultCount}/${entries.length}人`;
+  elements.externalCommentStatus.textContent = cloudFallback && !limitations.comments_available
+    ? `クラウド基本出走表：コメント・結果・払戻・指数は未取得です${limitations.line_confirmed ? "" : "／ライン未確定"}`
+    : `WINTICKETコメント　前検 ${inspectionCount}/${entries.length}人・レース後 ${resultCount}/${entries.length}人`;
   elements.raceTableHead.innerHTML = `<tr>
     <th class="sticky-bike">車番</th>
     <th class="sticky-name">選手名</th>
@@ -465,7 +469,9 @@ function renderRace() {
       </tr>`;
   }).join("");
   const candidates = Array.isArray(race.hole_candidates) ? race.hole_candidates : [];
-  elements.holeCandidates.innerHTML = candidates.length
+  elements.holeCandidates.innerHTML = cloudFallback && !limitations.analysis_available
+    ? `<h3>穴軸推奨候補（${fieldLabel}）</h3><p class="hole-candidate-none">クラウド基本出走表では指数・穴候補を表示しません。</p>`
+    : candidates.length
     ? `<h3>穴軸推奨候補（${fieldLabel}）</h3>${candidates.map((candidate) => `
         <article class="hole-candidate-card">
           <strong><span class="bike-number bike-${candidate.bike_number}">${candidate.bike_number}</span>${escapeHtml(candidate.official_name)}</strong>
@@ -1026,3 +1032,4 @@ window.addEventListener("keydown", (event) => {
 
 if (window.keirinWebApi) window.keirinWebApi.onReady(initialize);
 else initialize();
+
