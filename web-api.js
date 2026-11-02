@@ -178,6 +178,59 @@
     };
   }
 
+  async function mergeCloudComments(detail, raceId) {
+    const raceDate = `${raceId.slice(0, 4)}-${raceId.slice(4, 6)}-${raceId.slice(6, 8)}`;
+    let comments;
+    let manifest;
+    try {
+      [comments, manifest] = await Promise.all([
+        getSnapshot("cloud_race_comment", raceId, { forceRefresh: true }),
+        getSnapshot("cloud_comment_manifest", raceDate, { forceRefresh: true }),
+      ]);
+    } catch (error) {
+      detail.comment_fallback_error = snapshotMissing(error) ? "not_saved" : "read_failed";
+      return detail;
+    }
+    const generation = manifest?.cloud_generation?.generation_id;
+    if (manifest?.dataset !== "cloud_comment_manifest" || manifest?.status !== "complete" ||
+        manifest?.race_date !== raceDate || !generation ||
+        comments?.dataset !== "cloud_race_comment" || comments?.race_id !== raceId ||
+        comments?.cloud_generation?.generation_id !== generation ||
+        comments?.cloud_generation?.generation_status !== "complete") {
+      return detail;
+    }
+    const byRegistration = new Map(
+      (comments.entries || []).map((entry) => [String(entry.registration_no), entry]),
+    );
+    let fetched = 0;
+    (detail.entries || []).forEach((entry) => {
+      const cloud = byRegistration.get(String(entry.registration_no));
+      if (!cloud) return;
+      const inspection = cloud.inspection || {};
+      const result = cloud.result || {};
+      if (!entry.inspection_comment && inspection.status === "fetched" && inspection.text) {
+        entry.inspection_comment = inspection.text;
+        entry.inspection_comment_source = "cloud";
+        fetched += 1;
+      }
+      if (!entry.result_comment && result.status === "fetched" && result.text) {
+        entry.result_comment = result.text;
+        entry.result_comment_source = "cloud";
+        fetched += 1;
+      }
+      entry.cloud_comment_status = {
+        inspection: inspection.last_attempt_status || inspection.status || "not_attempted",
+        result: result.last_attempt_status || result.status || "not_attempted",
+      };
+    });
+    detail.limitations = detail.limitations || {};
+    detail.limitations.comments_available = fetched > 0 || (detail.entries || []).some(
+      (entry) => entry.inspection_comment || entry.result_comment,
+    );
+    detail.comment_generation = comments.cloud_generation;
+    return detail;
+  }
+
   async function getOwnRows(table, query = "") {
     return restRequest("GET", `/${table}${query}`);
   }
@@ -237,6 +290,7 @@
       if (!snapshotMissing(error)) throw error;
       data = await cloudRaceDetail(raceId, normalizedField);
     }
+    data = await mergeCloudComments(data, raceId);
     const reviews = await getOwnRows(
       "user_race_reviews",
       `?select=registration_no,leg_rating,user_comment,updated_at&race_id=eq.${encodeURIComponent(raceId)}`,
