@@ -623,6 +623,8 @@ function openExternalComment(registrationNo, type) {
             <h3>${escapeHtml(day.day_label || "レース後")}${day.race_number ? `<small>${day.race_number}R</small>` : ""}</h3>
             <p>${escapeHtml(day.comment || "コメントなし").replaceAll("\n", "<br>")}</p>
           </section>`).join("")
+      : entry.result_comment
+        ? `<section class="comment-day-section"><h3>レース後</h3><p>${escapeHtml(entry.result_comment).replaceAll("\n", "<br>")}</p></section>`
       : '<p class="comment-empty">コメントなし</p>';
   }
   elements.externalCommentModal.hidden = false;
