@@ -387,6 +387,13 @@ function incidentNameSummary(entry) {
 }
 
 function raceColumnCell(key, entry) {
+  const resultCommentStatus = entry.cloud_comment_status?.result;
+  const canOpenResultComment = Boolean(
+    entry.result_comment ||
+    (Array.isArray(entry.result_comment_days) && entry.result_comment_days.length) ||
+    resultCommentStatus === "fetched" ||
+    resultCommentStatus === "not_published"
+  );
   const renderers = {
     provisional_index: () => indexCell(entry.provisional_index),
     evaluation_index: () => indexCell(entry.evaluation_index, entry.evaluation_coverage),
@@ -400,7 +407,7 @@ function raceColumnCell(key, entry) {
     relative_score_index: () => indexCell(entry.relative_score_index),
     previous_leg: () => `<span class="previous-leg">${escapeHtml(previousLegText(entry))}</span>`,
     inspection_comment: () => `<button type="button" class="external-comment-button" data-external-comment="inspection" data-registration="${entry.registration_no}">${entry.inspection_comment ? '<span class="comment-button-label" data-short="前検を見る">前検コメントを見る</span>' : "コメントなし"}</button>`,
-    result_comment: () => `<button type="button" class="external-comment-button" data-external-comment="result" data-registration="${entry.registration_no}">${entry.result_comment ? '<span class="comment-button-label" data-short="レース後を見る">レース後コメントを見る</span>' : "コメントなし"}</button>`,
+    result_comment: () => `<button type="button" class="external-comment-button" data-external-comment="result" data-registration="${entry.registration_no}">${canOpenResultComment ? '<span class="comment-button-label" data-short="レース後を見る">レース後コメントを見る</span>' : "コメントなし"}</button>`,
     profile_comment: () => `<button type="button" class="external-comment-button" data-external-comment="profile" data-registration="${entry.registration_no}">${entry.profile_comment ? '<span class="comment-button-label" data-short="寸評を見る">選手寸評を見る</span>' : "寸評なし"}</button>`,
     leg_rating: () => `<select class="leg-rating" aria-label="${escapeHtml(entry.official_name)}の今日の脚評価"><option value="">未評価</option>${["◎", "◯", "△", "✕"].map((code) => `<option value="${code}" ${entry.leg_rating === code ? "selected" : ""}>${code}</option>`).join("")}</select>`,
     user_comment: () => `<button type="button" class="user-comment-button ${entry.user_comment ? "has-comment" : ""}" data-user-comment="${entry.registration_no}" title="${escapeHtml(entry.user_comment || "")}">${entry.user_comment ? "コメントあり" : "コメント入力"}</button>`,
