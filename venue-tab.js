@@ -122,6 +122,27 @@
     return `<div class="venue-payout-item"><strong>${label}</strong><b>平均 ${yen(item.average)}</b><p>中央値 ${yen(item.median)}<br>範囲 ${yen(item.minimum)} ～ ${yen(item.maximum)}<br>取得 ${number(item.raceCount)}レース（払戻 ${number(item.payoutCount)}件）</p></div>`;
   }
 
+  function rankingColumn(label, rows) {
+    return `<section class="venue-ranking-column"><h4>${label}</h4>${rows.length ? rows.map((row) => `
+      <div class="venue-ranking-row">
+        <span class="venue-ranking-rank">${number(row.rank)}</span>
+        <span class="venue-ranking-name">${html(row.name)}<small>${html(row.classCode || "")}</small></span>
+        <span class="venue-ranking-value">${Number(row.rate || 0).toFixed(1)}%<small>${number(row.starts)}走</small></span>
+      </div>`).join("") : '<p class="venue-trend-summary">対象選手なし</p>'}</section>`;
+  }
+
+  function renderMeetingRanking(ranking) {
+    if (!ranking) {
+      return '<p class="venue-trend-summary">この競輪場の最新開催出走表は保存されていません</p>';
+    }
+    return `<p class="venue-trend-summary">${html(ranking.raceDate)} 開催／出走 ${number(ranking.participantCount)}人／過去${number(ranking.periodYears)}年の当場成績${number(ranking.minimumStarts)}走以上</p>
+      <div class="venue-ranking-grid">
+        ${rankingColumn("勝率", ranking.winRate || [])}
+        ${rankingColumn("2連対率", ranking.top2Rate || [])}
+        ${rankingColumn("3連対率", ranking.top3Rate || [])}
+      </div>`;
+  }
+
   function renderTrend() {
     const overview = state.overview;
     if (!overview) return;
@@ -146,6 +167,7 @@
     byId("venuePayoutContent").innerHTML = payout
       ? `<p class="venue-trend-summary">${fieldLabel}／保存済み払戻データから集計</p><div class="venue-payout-grid">${payoutItem("2車単", payout.quinellaExacta)}${payoutItem("3連単", payout.trifecta)}</div>`
       : `<p class="venue-trend-summary">${fieldLabel}で選択条件に該当する払戻データがありません</p>`;
+    byId("venueMeetingRankingContent").innerHTML = renderMeetingRanking(overview.currentMeetingRanking);
   }
 
   async function loadTrendVenue() {

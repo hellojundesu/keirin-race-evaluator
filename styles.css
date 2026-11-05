@@ -170,6 +170,18 @@
 .venue-payout-item strong { display: block; color: #0d3a5b; font-size: 11px; }
 .venue-payout-item b { display: block; margin-top: 3px; color: #b45d00; font-size: 17px; }
 .venue-payout-item p { margin: 4px 0 0; color: #60758a; font-size: 11px; line-height: 1.45; }
+.venue-ranking-heading { background: #edf5fb; }
+.venue-ranking-heading h3 { color: #0d3a5b; }
+.venue-ranking-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.venue-ranking-column { min-width: 0; padding: 9px; border-radius: 8px; background: #f8fbfd; }
+.venue-ranking-column h4 { margin: 0 0 7px; color: #0d3a5b; font-size: 13px; }
+.venue-ranking-row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 6px; padding: 7px 0; border-top: 1px solid #e3eaf0; }
+.venue-ranking-row:first-of-type { border-top: 0; }
+.venue-ranking-rank { color: #1769aa; font-size: 12px; font-weight: 900; }
+.venue-ranking-name { min-width: 0; overflow: hidden; font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.venue-ranking-name small { display: block; color: #60758a; font-size: 9px; font-weight: 500; }
+.venue-ranking-value { color: #0d3a5b; font-size: 13px; font-weight: 900; text-align: right; }
+.venue-ranking-value small { display: block; color: #60758a; font-size: 9px; font-weight: 500; }
 
 @media (max-width: 1050px) {
   .venue-controls,
@@ -230,6 +242,12 @@
   .venue-payout-item strong,
   .venue-payout-item p { font-size: 9px; }
   .venue-payout-item b { font-size: 13px; }
+  .venue-ranking-grid { grid-template-columns: 1fr; gap: 5px; }
+  .venue-ranking-column { padding: 7px; }
+  .venue-ranking-column h4 { font-size: 11px; }
+  .venue-ranking-row { padding: 5px 0; }
+  .venue-ranking-name,
+  .venue-ranking-value { font-size: 10px; }
 }
 
 * { box-sizing: border-box; }
