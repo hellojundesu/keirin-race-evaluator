@@ -338,6 +338,9 @@ h1 { margin: 0; font-size: 24px; letter-spacing: .02em; }
 .race-filter-row .secondary-button { min-width: 76px; }
 .race-list { padding: 8px; display: grid; gap: 6px; }
 .race-list-empty { margin: 12px; color: var(--muted); font-size: 14px; }
+.cloud-acquisition-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.cloud-acquisition-actions small { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.cloud-acquisition-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; text-decoration: none; }
 .race-list-card { width: 100%; padding: 11px; display: grid; grid-template-columns: 48px 1fr auto; align-items: center; gap: 10px; text-align: left; color: var(--ink); background: #fff; border: 1px solid transparent; border-radius: 9px; }
 .race-list-card:hover { background: #f3f9fd; }
 .race-list-card.active { background: var(--blue-light); border-color: #9bcbe9; }
@@ -836,6 +839,8 @@ textarea { resize: vertical; }
 }
 
 @media (max-width: 520px) {
+  .cloud-acquisition-actions { align-items: stretch; flex-direction: column; }
+  .cloud-acquisition-button { width: 100%; }
   .cloud-data-badge {
     margin-left: 0.25rem;
     font-size: 0.62rem;

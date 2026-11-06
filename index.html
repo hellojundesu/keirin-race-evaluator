@@ -6,7 +6,7 @@
   <title>競輪レース評価ツール</title>
   <meta name="description" content="公開出走表と登録番号DBを組み合わせた競輪レース評価・脚評価管理画面">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20261017-payout-layout">
+  <link rel="stylesheet" href="styles.css?v=20261106-racecard-recovery">
 </head>
 <body class="web-locked">
   <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
@@ -57,6 +57,10 @@
         </label>
         <button id="raceDateSearchButton" type="submit" class="primary-button">この日のレースを検索</button>
       </form>
+      <div class="cloud-acquisition-actions">
+        <a class="secondary-button cloud-acquisition-button" href="https://github.com/hellojundesu/keirin-tenkai-board/actions/workflows/race-cards.yml" target="_blank" rel="noopener noreferrer">今日の出走表を取得（GitHub）</a>
+        <small>自動取得が遅れている場合の予備です。GitHubで「Run workflow」→ mode「full」を実行してください。</small>
+      </div>
       <div id="dailyRacecards" class="daily-racecards">
         <p class="race-list-empty">日付を指定して検索してください。</p>
       </div>
