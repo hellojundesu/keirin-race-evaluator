@@ -464,8 +464,7 @@
     if (method === "POST" && url.pathname === "/api/races/import") {
       const raceId = String(body?.source || "").match(/\d{12}/)?.[0];
       if (!raceId) throw new Error("12桁のレースIDを入力してください");
-      const data = await getSnapshot("race_detail", `${raceId}:all`).catch(() => null);
-      if (!data) throw new Error("このレースはまだWebへ同期されていません。PC側で取り込んでから差分送信してください");
+      const data = await raceDetail(raceId, "all");
       return { ok: true, race_id: raceId, starters: data.entries.length, comment_error: null };
     }
 
