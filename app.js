@@ -613,15 +613,15 @@ function openExternalComment(registrationNo, type) {
   } else if (isInspection) {
     const selectedDate = raceState.selectedData.race.race_date;
     const days = Array.isArray(entry.race_pre_comment_days) ? entry.race_pre_comment_days
-      .filter((day) => /^\\d{4}-\\d{2}-\\d{2}$/.test(day.race_date || "") && day.race_date <= selectedDate && day.comment)
+      .filter((day) => /^\d{4}-\d{2}-\d{2}$/.test(day.race_date || "") && day.race_date <= selectedDate && day.comment)
       .sort((a, b) => a.race_date.localeCompare(b.race_date)) : [];
     elements.externalCommentBody.innerHTML = days.length
       ? days.map((day) => `<section class="comment-day-section">
           <h3>${escapeHtml(day.day_label || day.race_date)}${day.race_number ? `<small>${Number(day.race_number)}R</small>` : ""}</h3>
-          <p>${escapeHtml(day.comment).replaceAll("\\n", "<br>")}</p>
+          <p>${escapeHtml(day.comment).replaceAll("\n", "<br>")}</p>
         </section>`).join("")
       : entry.inspection_comment
-        ? `<section class="comment-day-section"><h3>旧・前検コメント</h3><p>${escapeHtml(entry.inspection_comment).replaceAll("\\n", "<br>")}</p></section>`
+        ? `<section class="comment-day-section"><h3>旧・前検コメント</h3><p>${escapeHtml(entry.inspection_comment).replaceAll("\n", "<br>")}</p></section>`
         : '<p class="comment-empty">コメントなし</p>';
   } else {
     const days = Array.isArray(entry.result_comment_days) ? [...entry.result_comment_days] : [];
