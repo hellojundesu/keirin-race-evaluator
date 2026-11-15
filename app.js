@@ -33,7 +33,7 @@ const raceColumnDefinitions = {
   chaos_index: { label: "波乱指数" },
   previous_leg: { label: "前回脚評価" },
   leg_rating: { label: "今日の脚評価" },
-  inspection_comment: { label: "前検コメント", className: "comment-column" },
+  inspection_comment: { label: "レース前コメント", className: "comment-column" },
   result_comment: { label: "レース後コメント", className: "comment-column" },
   profile_comment: { label: "選手寸評", className: "comment-column profile-comment-column" },
   user_comment: { label: "個人的レースコメント", className: "comment-column user-comment-column" },
@@ -406,7 +406,7 @@ function raceColumnCell(key, entry) {
     chaos_index: () => indexCell(entry.chaos_index),
     relative_score_index: () => indexCell(entry.relative_score_index),
     previous_leg: () => `<span class="previous-leg">${escapeHtml(previousLegText(entry))}</span>`,
-    inspection_comment: () => `<button type="button" class="external-comment-button" data-external-comment="inspection" data-registration="${entry.registration_no}">${entry.inspection_comment ? '<span class="comment-button-label" data-short="前検を見る">前検コメントを見る</span>' : "コメントなし"}</button>`,
+    inspection_comment: () => `<button type="button" class="external-comment-button" data-external-comment="inspection" data-registration="${entry.registration_no}">${(entry.race_pre_comment_days?.length || entry.inspection_comment) ? '<span class="comment-button-label" data-short="レース前を見る">レース前コメントを見る</span>' : "コメントなし"}</button>`,
     result_comment: () => `<button type="button" class="external-comment-button" data-external-comment="result" data-registration="${entry.registration_no}">${canOpenResultComment ? '<span class="comment-button-label" data-short="レース後を見る">レース後コメントを見る</span>' : "コメントなし"}</button>`,
     profile_comment: () => `<button type="button" class="external-comment-button" data-external-comment="profile" data-registration="${entry.registration_no}">${entry.profile_comment ? '<span class="comment-button-label" data-short="寸評を見る">選手寸評を見る</span>' : "寸評なし"}</button>`,
     leg_rating: () => `<select class="leg-rating" aria-label="${escapeHtml(entry.official_name)}の今日の脚評価"><option value="">未評価</option>${["◎", "◯", "△", "✕"].map((code) => `<option value="${code}" ${entry.leg_rating === code ? "selected" : ""}>${code}</option>`).join("")}</select>`,
@@ -448,7 +448,7 @@ function renderRace() {
   const { race, entries } = raceState.selectedData;
   const cloudFallback = Boolean(race.cloud_fallback || raceState.selectedData.cloud_fallback);
   const limitations = raceState.selectedData.limitations || {};
-  const inspectionCount = entries.filter((entry) => entry.inspection_comment).length;
+  const inspectionCount = entries.filter((entry) => entry.race_pre_comment_days?.length || entry.inspection_comment).length;
   const resultCount = entries.filter((entry) => entry.result_comment).length;
   const fieldLabel = { all: "全成績", 7: "7車成績", 9: "9車成績" }[race.field_type_filter] || "全成績";
   elements.raceEmptyState.hidden = true;
@@ -458,7 +458,7 @@ function renderRace() {
   renderLineGroups(race.line_groups);
   elements.externalCommentStatus.textContent = cloudFallback && !limitations.comments_available
     ? `クラウド基本出走表：コメント・結果・払戻・指数は未取得です${limitations.line_confirmed ? "" : "／ライン未確定"}`
-    : `WINTICKETコメント　前検 ${inspectionCount}/${entries.length}人・レース後 ${resultCount}/${entries.length}人`;
+    : `レース前コメント ${inspectionCount}/${entries.length}人・レース後（旧データ）${resultCount}/${entries.length}人`;
   elements.raceTableHead.innerHTML = `<tr>
     <th class="sticky-bike">車番</th>
     <th class="sticky-name">選手名</th>
@@ -603,7 +603,7 @@ function openExternalComment(registrationNo, type) {
   if (!entry) return;
   const isInspection = type === "inspection";
   const isProfile = type === "profile";
-  elements.externalCommentKicker.textContent = isProfile ? "選手寸評" : (isInspection ? "前検コメント" : "レース後コメント");
+  elements.externalCommentKicker.textContent = isProfile ? "選手寸評" : (isInspection ? "レース前コメント" : "レース後コメント");
   elements.externalCommentTitle.textContent = entry.official_name;
   elements.externalCommentSubtitle.textContent = `${raceState.selectedData.race.venue_name} ${raceState.selectedData.race.race_number}R`;
   if (isProfile) {
@@ -611,9 +611,18 @@ function openExternalComment(registrationNo, type) {
       ? `<section class="comment-day-section"><h3>選手寸評</h3><p>${escapeHtml(entry.profile_comment).replaceAll("\n", "<br>")}</p></section>`
       : '<p class="comment-empty">寸評なし</p>';
   } else if (isInspection) {
-    elements.externalCommentBody.innerHTML = entry.inspection_comment
-      ? `<section class="comment-day-section"><h3>前検</h3><p>${escapeHtml(entry.inspection_comment).replaceAll("\n", "<br>")}</p></section>`
-      : '<p class="comment-empty">コメントなし</p>';
+    const selectedDate = raceState.selectedData.race.race_date;
+    const days = Array.isArray(entry.race_pre_comment_days) ? entry.race_pre_comment_days
+      .filter((day) => /^\\d{4}-\\d{2}-\\d{2}$/.test(day.race_date || "") && day.race_date <= selectedDate && day.comment)
+      .sort((a, b) => a.race_date.localeCompare(b.race_date)) : [];
+    elements.externalCommentBody.innerHTML = days.length
+      ? days.map((day) => `<section class="comment-day-section">
+          <h3>${escapeHtml(day.day_label || day.race_date)}${day.race_number ? `<small>${Number(day.race_number)}R</small>` : ""}</h3>
+          <p>${escapeHtml(day.comment).replaceAll("\\n", "<br>")}</p>
+        </section>`).join("")
+      : entry.inspection_comment
+        ? `<section class="comment-day-section"><h3>旧・前検コメント</h3><p>${escapeHtml(entry.inspection_comment).replaceAll("\\n", "<br>")}</p></section>`
+        : '<p class="comment-empty">コメントなし</p>';
   } else {
     const days = Array.isArray(entry.result_comment_days) ? [...entry.result_comment_days] : [];
     days.sort((left, right) => (left.day_index ?? 99) - (right.day_index ?? 99));
